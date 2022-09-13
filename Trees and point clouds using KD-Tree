@@ -1,0 +1,150 @@
+#Calculating 2D tree density
+import numpy as np
+from scipy.spatial import KDTree
+import matplotlib.pyplot as plt
+import geopandas as gpd
+import shapefile as shp
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.spatial import cKDTree
+import matplotlib.patches as patches
+
+PotsdamT='/Users/enduranceebhodaghe/Spatial Data Analysis/Potsdam_Baeume_shp_kml/Baeume.shp'
+Potsdamtrees=gpd.read_file(PotsdamT)
+
+PotsdamTreesXY=np.c_[np.array(Potsdamtrees.geometry.x),np.array(Potsdamtrees.geometry.y)]
+PotsdamTreesXY=np.array(list(zip(Potsdamtrees.geometry.x,Potsdamtrees.geometry.y)))
+
+fig, ax=plt.subplots(1,1,figsize=(10,8))
+ax.scatter(PotsdamTreesXY[:,0],PotsdamTreesXY[:,1],alpha=0.07,s=1,color='green')
+ax.set_title('Potsdam Trees Point Data')
+ax.set_xlabel('X Coordinate')
+ax.set_ylabel('Y Coordinate')
+
+tree=KDTree(PotsdamTreesXY)
+
+k=12
+PotsdamT_distance,PotsdamT_idx=tree.query(PotsdamTreesXY,k=k, workers=-1)
+
+maximum_distance=np.max(PotsdamT_distance,axis=1)
+area_circle=np.pi*maximum_distance**2
+PotsdamT_density=k/area_circle
+
+fig, ax=plt.subplots(1,1,figsize=(10,8))
+plt.scatter(PotsdamTreesXY[:,0],
+            PotsdamTreesXY[:,1],
+            s=0.7,
+            c=PotsdamT_density,
+            vmin=np.percentile(PotsdamT_density,2),
+            vmax=np.percentile(PotsdamT_density,98))
+colorscale='Viridis'
+ax.grid()
+h=plt.colorbar()
+ax.set_title('Potsdam 2D point Density')
+ax.set_xlabel('X Coordinate')
+ax.set_ylabel('Y Coordinate')
+h.set_label('Density of Trees(pts/m^3)')
+ax.axis('equal')
+
+average_distances=np.mean(PotsdamT_distance,axis=1)
+print(average_distances.mean())
+
+#Calculating tree density in 1x1 km^2 tiles throughout the entire dataset
+
+grid_spacing = 1000
+
+xv, yv = np.meshgrid(np.arange(PotsdamTreesXY[:, 0].min(),
+                               PotsdamTreesXY[:, 0].max(), grid_spacing),
+                     np.arange(PotsdamTreesXY[:, 1].min(),
+                               PotsdamTreesXY[:, 1].max(), grid_spacing),
+                     indexing='ij')
+
+xv_pt = xv + grid_spacing / 2
+yv_pt = yv + grid_spacing / 2
+
+grid_pts = np.c_[xv_pt.ravel(), yv_pt.ravel()]
+
+ptrees_xy_grid_pts_dist, ptrees_xy_grid_pts_idx = tree.query(
+    grid_pts, k=30, workers=-1, distance_upper_bound=grid_spacing / 2)
+    
+xbins = np.arange(PotsdamTreesXY[:, 0].min(), PotsdamTreesXY[:, 0].max(), grid_spacing)
+ybins = np.arange(PotsdamTreesXY[:, 1].min(), PotsdamTreesXY[:, 1].max(), grid_spacing)
+H, xedges, yedges = np.histogram2d(PotsdamTreesXY[:,0], PotsdamTreesXY[:,1], bins=(xbins, ybins))
+fig, ax = plt.subplots(1, 1,figsize=(15,10))
+ax.pcolormesh(xv, yv, H)
+ax.plot(xv_pt.ravel(), yv_pt.ravel(), 'k.', ms=1)
+ax.scatter(PotsdamTreesXY[:,0], PotsdamTreesXY[:,1], alpha=0.01, s=2, c='w')
+ax.set_title('Potsdam trees density (1 x 1km) grid cells')
+ax.set_xlabel('X Coordinate')
+ax.set_ylabel('Y Coordinate')
+ax.axis('image')
+
+import numpy as np
+from scipy.spatial import KDTree
+import matplotlib.pyplot as plt
+import geopandas as gpd
+import shapefile as shp
+
+from math import e
+
+import ast
+import plotly
+import plotly.express as px
+import numpy as np
+import pandas as pd
+import geopandas as gpd
+import shapely
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+
+fig, ax = plt.subplots(1, 1,figsize=(10,10))
+plt.scatter(PotsdamTreesXY[:,0],
+            PotsdamTreesXY[:,1],
+            s=90,
+            c=PotsdamT_density,
+            vmin=np.percentile(PotsdamT_density,2),
+            vmax=np.percentile(PotsdamT_density,98))
+h=plt.colorbar(shrink=0.9)
+ax.scatter(PotsdamTreesXY[:,0], PotsdamTreesXY[:,1], alpha=0.05, s=3, c=PotsdamT_density,
+            vmin=np.percentile(PotsdamT_density,2),
+            vmax=np.percentile(PotsdamT_density,98))
+ax.axis('image')
+ax.plot(xv_pt.ravel(), yv_pt.ravel(), 'k.', ms=5)
+for i in xv[:,1]:
+    ax.vlines(i, ymin=yv.min(), ymax=yv.max(), ls='-', lw=1, colors='darkgray')
+for i in yv[1,:]:
+    ax.hlines(i, xmin=xv.min(), xmax=xv.max(), ls='-', lw=1, colors='darkgray')
+ax.axis('equal')
+ax.set_title('Potsdam Tree Density with (1 x 1km) grid cells')
+ax.set_xlabel('X Coordinate')
+ax.set_ylabel('Y Coordinate')
+h.set_label('Density of Trees(pts/m^3)')
+ax.axis('image')
+
+#Number of grid from each grid cell
+
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+xv_pt = xv + grid_spacing / 2
+yv_pt = yv + grid_spacing / 2
+
+
+xbins = np.arange(PotsdamTreesXY[:, 0].min(), PotsdamTreesXY[:, 0].max(), grid_spacing)
+ybins = np.arange(PotsdamTreesXY[:, 1].min(), PotsdamTreesXY[:, 1].max(), grid_spacing)
+
+t = np.linspace(0, 4*np.pi, 100)
+x = PotsdamTreesXY[:,0]
+y = PotsdamTreesXY[:,1]       
+
+grid, _, _ = np.histogram2d(x, y, bins=[xbins, ybins])
+
+plt.figure(figsize=(8,8))
+plt.pcolormesh(xv_pt,yv_pt,H)
+h=plt.colorbar()
+h.set_label('number of trees per grid cell (1km x 1km)')
+plt.title('number of Trees per grid cell')
+plt.xlabel('X Coordinate')
+plt.ylabel('Y Coordinate')
+plt.show()
